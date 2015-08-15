@@ -6,25 +6,23 @@ log/
 .idea/
 .settings/
 
-application/cache/*
-!application/cache/index.html
-!application/cache/.htaccess
+CI/application/cache/*
+!CI/application/cache/index.html
+!CI/application/cache/.htaccess
 
-application/logs/*
+CI/application/logs/*
 !application/logs/index.html
 !application/logs/.htaccess
 
-application/config/*
-!application/config/index.html
-!application/config/.htaccess
+CI/application/config/
 
-upload/*
-!upload/index.html
-!upload/.htaccess
+CI/upload/*
+!CI/upload/index.html
+!CI/upload/.htaccess
 
-application/twigcahce/*
-!application/twigcahce/index.html
-!application/twigcahce/.htaccess
+CI/application/twigcahce/*
+!CI/application/twigcahce/index.html
+!CI/application/twigcahce/.htaccess
 
 .idea/*
 
