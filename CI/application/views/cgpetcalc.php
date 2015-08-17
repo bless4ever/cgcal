@@ -1,6 +1,6 @@
 <html>
 <head>
-        <title>Next Generation PetCalc</title>
+        <title>Next Generation PetCalc - CgCal.com</title>
         <meta charset="utf-8">
 </head>
 <body>
