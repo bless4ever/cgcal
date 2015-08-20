@@ -76,5 +76,56 @@ class Cgpetcalc extends CI_Controller {
             return;
 
     }
+    public function test()
+    {
+        echo '<pre>';
+        echo '<meta charset = utf8>';
+        //$grade = $this->pet_model->getNamesBySearch('星菇');
+        $pet = '1947 2899 270 254 184 93 星菇 242 158::lv93 00002 162 52 40 52 242<br>';
+        $pet = '309 230 110 59 46 10 改造僵尸 加攻<br>';
+        //$pet = '430 254 138 84 71 17 改造猎豹 00321  17级未加    <br>';
+
+        echo $pet;
+        $petData = explode(' ', $pet);
+        $grade = $this->pet_model->getNamesBySearch($petData[6]);
+        //print_r($grade);
+        $prop = array($petData[0],$petData[1],$petData[2],$petData[3],$petData[4]);
+        $propmax = array($petData[0]+1,$petData[1]+1,$petData[2]+1,$petData[3]+1,$petData[4]+1);
+        $lv = $petData[5];
+        print_r($prop);
+
+        $bp = $this->pet_model->getBPByProp($prop);
+        $bpmin = array();
+        foreach ($bp as $key => $value ) {
+            $bpmin[$key] = $value-2;
+        }
+        $bpmax = $this->pet_model->getBPByProp($propmax);
+        $grade = array('xue'=>$grade[0]->xue,'gong'=>$grade[0]->gong,'fang'=>$grade[0]->fang,'min'=>$grade[0]->min,'mo'=>$grade[0]->mo);
+        print_r($grade);
+        print_r($bpmax);
+        print_r($bp);
+
+        foreach ($bpmax as $key => $value ) {
+            //echo intval(5*($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)-$grade[$key]);
+
+            echo $value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2);
+            echo '/';
+        }
+        echo '<br>';
+        foreach ($bpmin as $key => $value ) {
+            /*
+            if ($key == 'gong') {
+                echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)+1))*92)*5-$grade[$key]);
+
+            } else {
+                echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)*5-$grade[$key]);
+
+            }
+            */
+            echo $value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2);
+            echo '/';
+        }
+        echo '<br>';
+    }
 
 }

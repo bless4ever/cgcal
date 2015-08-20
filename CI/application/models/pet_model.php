@@ -2,6 +2,24 @@
 class Pet_model extends CI_Model {
     public function __construct() {
     }
+    public function tnt($d)
+    {
+        $d %=64;
+        return max($d*0.04+ 0.005*(2*intval($d/5)-($d%5 == 0 ? 1:0)),0);
+    }
+    public function getBPByProp($prop = array())
+    {
+        if (count($prop)<5) {
+            return array();
+        }
+        $data = array();
+        for ($i=0; $i < 5; $i++) {
+            $data[] = $i*10000+$prop[$i];
+        }
+        $this->db->select("sum(xue)/10000 as xue,sum(gong)/10000 as gong,sum(fang)/10000 as fang ,sum(min)/10000 as min,sum(mo)/10000 as mo");
+        $this->db->where_in('valueId', $data);
+        return $this->db->get('prop_to_bp')->result()[0];
+    }
     public function getNamesBySearch($name = '')
     {
         if (!$name) {
