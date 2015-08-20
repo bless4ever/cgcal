@@ -1,7 +1,9 @@
 <html>
 <head>
+        <meta name="baidu-site-verification" content="B1LS7CXrmW" />
         <title>Next Generation PetCalc - CgCal.com</title>
         <meta charset="utf-8">
+
 </head>
 <body>
         <h3>欢迎来到新一代魔力宝贝算档器>CGCal<</h3>
