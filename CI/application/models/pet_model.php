@@ -62,6 +62,27 @@ class Pet_model extends CI_Model {
         $d %=64;
         return max($d*0.04+ 0.005*(2*intval($d/5)-($d%5 == 0 ? 1:0)),0);
     }
+    public function getBPByPropByCalc($prop = array())
+    {
+        $this->load->helper('vector');
+        $invTnt = array();
+        //注意！invTnt[0-4]*[hmade]^-1 = 100000 *[xgfmm]!!!! BP是100000倍，而random表是100倍。
+        $invTnt[] = array( 13.24901855,	-0.806318907,	-6.785929774,	-10.93898148,   -16.40847223);
+        $invTnt[] = array(-0.782811067,	-0.608853052,	 38.607709,	    -2.429143453,	-3.643715179);
+        $invTnt[] = array(-0.69583206,	-0.541202713,	-2.719073478,	 34.87779841,	-3.238857937);
+        $invTnt[] = array(-0.467806013,	-0.363849121,	-2.954151876,	-2.452651293,	 51.87657862);
+        $invTnt[] = array(-0.935612027,	 10.38341287,	-5.908303753,	-4.905302585,	-7.357953878);
+        $result = array();
+        $prop = minus($prop, mul(1, array(20, 20, 20, 20, 20)));
+        for ($i=0; $i <5 ; $i++) {
+            $result[$i] = 0;
+            for ($j=0; $j < 5; $j++) {
+                $result[$i] += $invTnt[$i][$j] * $prop[$j]/100;
+            }
+        }
+        return $result;
+
+    }
     public function getBPByProp($prop = array())
     {
         if (count($prop)<5) {

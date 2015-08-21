@@ -117,7 +117,16 @@ class Cgpetcalc extends CI_Controller {
             $prop = array($petData[0],$petData[1],$petData[2],$petData[3],$petData[4]);
             $propmax = array($petData[0]+1,$petData[1]+1,$petData[2]+1,$petData[3]+1,$petData[4]+1);
             $lv = $petData[5];
+            $t1 = microtime(true);
             $bp = $this->pet_model->getBPByProp($prop);
+            echo (microtime(true) - $t1).'ms for directly MYSQL<br>';
+            $t1 = microtime(true);
+            $bpcal = $this->pet_model->getBPByPropByCalc($prop);
+            echo (microtime(true) - $t1).'ms for directly calc';
+            print_r($bp);
+            print_r($bpcal);
+
+            die(0);
             $bpmin = array();
 
             $bpmax = $this->pet_model->getBPByProp($propmax);
