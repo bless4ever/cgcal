@@ -9,6 +9,7 @@ class Cgpetcalc extends CI_Controller {
         }
         public function index()
         {
+            $this->load->helper('vector');
             $data['petData'] ='';
             $data['petResult'] ='';
             $data['petName'] = '';
@@ -18,17 +19,17 @@ class Cgpetcalc extends CI_Controller {
             if (!$petName) {
                 $petName = $this->input->post('petName');
             }
-            $names = $this->pet_model->getNamesBySearch($petName);
+            $names = $this->pet_model->getGradesBySearch($petName);
             if (count($names) == 0) {
                 $data['petName'] = $petName;
 
             } elseif (count($names) == 1) {
                 $petName = $names[0]->name;
-                $petGrade = array($names[0]->xue, $names[0]->gong, $names[0]->fang, $names[0]->min, $names[0]->mo);
+                $petGrade = $this->pet_model->petKindToGrade($names[0]);
                 $petLv = 1;
                 $dataBased = array();
                 foreach ($petGrade as $key => $g) {
-                    $dataBased []= max($g-4,0)*20;
+                    $dataBased [$key]= max($g-4,0)*20;
                 }
                 $data['petName'] = $petName;
                 $data['petGrade'] = implode(' ', $petGrade);
@@ -49,14 +50,14 @@ class Cgpetcalc extends CI_Controller {
                 $data['petData'] = $petData;
                 $petData = explode(' ',$petData);
                 $remain = array();
-                $remain['hp'] = $petData[0]*1000 - 20*1000 - $this->pet_model->getOriginPropFromBP('hp', $dataBased);
-                $remain['mp'] = $petData[1]*1000 - 20*1000 - $this->pet_model->getOriginPropFromBP('mp', $dataBased);
-                $remain['atk'] = $petData[2]*1000 - 20*1000 - $this->pet_model->getOriginPropFromBP('atk', $dataBased);
-                $remain['def'] = $petData[3]*1000 - 20*1000 - $this->pet_model->getOriginPropFromBP('def', $dataBased);
-                $remain['egi'] = $petData[4]*1000 - 20*1000 - $this->pet_model->getOriginPropFromBP('egi', $dataBased);
+                $remain['hp'] = $petData[0]*1000 - 20*1000 - $this->pet_model->getPropFromBP('hp', $dataBased);
+                $remain['mp'] = $petData[1]*1000 - 20*1000 - $this->pet_model->getPropFromBP('mp', $dataBased);
+                $remain['atk'] = $petData[2]*1000 - 20*1000 - $this->pet_model->getPropFromBP('atk', $dataBased);
+                $remain['def'] = $petData[3]*1000 - 20*1000 - $this->pet_model->getPropFromBP('def', $dataBased);
+                $remain['egi'] = $petData[4]*1000 - 20*1000 - $this->pet_model->getPropFromBP('egi', $dataBased);
                 if (count($petData) == 7) {
-                    $remain['spr'] = $petData[5]*1000 - 100*1000 - $this->pet_model->getOriginPropFromBP('spr', $dataBased);
-                    $remain['rec'] = $petData[6]*1000 - 100*1000 - $this->pet_model->getOriginPropFromBP('rec', $dataBased);
+                    $remain['spr'] = $petData[5]*1000 - 100*1000 - $this->pet_model->getPropFromBP('spr', $dataBased);
+                    $remain['rec'] = $petData[6]*1000 - 100*1000 - $this->pet_model->getPropFromBP('rec', $dataBased);
                 }
 
                 $results = $this->pet_model->getOriginResultByRemain($remain);
@@ -76,56 +77,102 @@ class Cgpetcalc extends CI_Controller {
             return;
 
     }
+    public function testGenPet()
+    {
+        echo '<pre>';
+        echo '<meta charset = utf8>';
+        $name = '螳螂';
+        $lv = 85;
+        $diffGradeStr = '14223';
+        $randomGradeStr = '20125';
+        $addBP = '0,84,0,0,0';
+        $grade = $this->pet_model->petKindToGrade($this->pet_model->getGradesBySearch($name)[0]);
+        echo "grade";print_r($grade);
+        $resultPet = $this->pet_model->genPet($grade, $lv, $diffGrade, $randomGrade, $addBP);
+        print_r($resultPet);
+
+    }
+    public function tnt()
+    {
+        for ($i=0; $i < 100; $i++) {
+            echo $i.':'.$this->pet_model->tnt($i).'<br>';
+        }
+
+    }
     public function test()
     {
         echo '<pre>';
         echo '<meta charset = utf8>';
-        //$grade = $this->pet_model->getNamesBySearch('星菇');
-        $pet = '1947 2899 270 254 184 93 星菇 242 158::lv93 00002 162 52 40 52 242<br>';
-        $pet = '309 230 110 59 46 10 改造僵尸 加攻<br>';
-        //$pet = '430 254 138 84 71 17 改造猎豹 00321  17级未加    <br>';
+        $pets = array();
+        $pets[] = '1947 2899 270 254 184 93 星菇 mo 242 158::lv93 00002 162 52 40 52 242';
+        $pets[] = '309 230 110 59 46 10 改造僵尸 gong 加攻';
+        $pets[] = '430 254 138 84 71 17 改造猎豹 no 00321  17级未加';
+        $pets[] = '235 300 55 113 44 10 潜盾 no 未加1D 1血';
+        foreach ($pets as $pet) {
+            echo $pet;
+            echo '<br>';
+            $petData = explode(' ', $pet);
+            $grade = $this->pet_model->getGradesBySearch($petData[6]);
 
-        echo $pet;
-        $petData = explode(' ', $pet);
-        $grade = $this->pet_model->getNamesBySearch($petData[6]);
-        //print_r($grade);
-        $prop = array($petData[0],$petData[1],$petData[2],$petData[3],$petData[4]);
-        $propmax = array($petData[0]+1,$petData[1]+1,$petData[2]+1,$petData[3]+1,$petData[4]+1);
-        $lv = $petData[5];
-        print_r($prop);
+            $prop = array($petData[0],$petData[1],$petData[2],$petData[3],$petData[4]);
+            $propmax = array($petData[0]+1,$petData[1]+1,$petData[2]+1,$petData[3]+1,$petData[4]+1);
+            $lv = $petData[5];
+            $bp = $this->pet_model->getBPByProp($prop);
+            $bpmin = array();
 
-        $bp = $this->pet_model->getBPByProp($prop);
-        $bpmin = array();
-        foreach ($bp as $key => $value ) {
-            $bpmin[$key] = $value-2;
-        }
-        $bpmax = $this->pet_model->getBPByProp($propmax);
-        $grade = array('xue'=>$grade[0]->xue,'gong'=>$grade[0]->gong,'fang'=>$grade[0]->fang,'min'=>$grade[0]->min,'mo'=>$grade[0]->mo);
-        print_r($grade);
-        print_r($bpmax);
-        print_r($bp);
+            $bpmax = $this->pet_model->getBPByProp($propmax);
+            foreach ($bp as $key => $value ) {
+                if ($key==$petData[7]) {
+                    $bp->$key-= $lv-1;
+                    $bpmax->$key -= $lv-1;
+                }
 
-        foreach ($bpmax as $key => $value ) {
-            //echo intval(5*($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)-$grade[$key]);
-
-            echo $value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2);
-            echo '/';
-        }
-        echo '<br>';
-        foreach ($bpmin as $key => $value ) {
-            /*
-            if ($key == 'gong') {
-                echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)+1))*92)*5-$grade[$key]);
-
-            } else {
-                echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)*5-$grade[$key]);
-
+                $bpmin[$key] = $bp->$key-2;
             }
-            */
-            echo $value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2);
-            echo '/';
+            $grade = array('xue'=>$grade[0]->xue,'gong'=>$grade[0]->gong,'fang'=>$grade[0]->fang,'min'=>$grade[0]->min,'mo'=>$grade[0]->mo);
+            echo 'All:';
+            echo implode('/',$grade).'<br>';
+            echo 'max:';
+            foreach ($bpmax as $key => $value ) {
+                //echo intval(5*($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)-$grade[$key]);
+
+                echo round($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2),2);
+                echo '/';
+            }
+            echo '<br>';
+            echo 'now:';
+            foreach ($bp as $key => $value ) {
+                /*
+                if ($key == 'gong') {
+                    echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)+1))*92)*5-$grade[$key]);
+
+                } else {
+                    echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)*5-$grade[$key]);
+
+                }
+                */
+                echo round($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2),2);
+                echo '/';
+            }
+            echo '<br>';
+            echo 'min:';
+            foreach ($bpmin as $key => $value ) {
+                /*
+                if ($key == 'gong') {
+                    echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)+1))*92)*5-$grade[$key]);
+
+                } else {
+                    echo intval(($value - $this->pet_model->tnt(intval($value/(92*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2)))*92)*5-$grade[$key]);
+
+                }
+                */
+                echo round($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2),2)+1;
+                echo '/';
+            }
+            echo '<br>';
         }
-        echo '<br>';
+
+
     }
 
 }
