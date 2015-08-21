@@ -10,6 +10,7 @@
         <h4>感谢魔力百科提供宠物资料数据<br>
         欢迎关注魔力百科更好（看）的算档器！</h4>
         <h4>代码托管在：<a href="https://github.com/yanggs07/cgcal">github</a></h4>
+        <h3>亲！最近刚刚上线了宠物模拟器，<a href="/cgPetSimulator/">点我看看。</a></h3>
 
     <form action= "/" method = "post" >
         宠物名称<input type=text id ="petName" name="petName" value="<?php echo $petName?>" style=" width:280px" placeholder="输入宠物名称或拼音简称，如‘螳螂’，‘螳’，‘tl’均可"><br>

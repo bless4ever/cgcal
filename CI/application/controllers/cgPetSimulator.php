@@ -53,12 +53,12 @@ class CgPetSimulator extends CI_Controller {
             $petDiffGrade = $this->input->post('petDiffGrade');
             $petRandomGrade = $this->input->post('petRandomGrade');
             $addBP = $this->input->post('addBP');
-
+            $data['petLv'] = $petLv;
+            $data['petDiffGrade'] = $petDiffGrade;
+            $data['petRandomGrade'] = $petRandomGrade;
+            $data['addBP'] = $addBP;
             if (! $petLv) {
                 $petLv = 100;
-            }
-            if (! $petDiffGrade) {
-                $petDiffGrade = '00000';
             }
             if (! $petRandomGrade) {
                 $petRandomGrade = '22222';
@@ -66,10 +66,7 @@ class CgPetSimulator extends CI_Controller {
             if (! $addBP) {
                 $addBP = '0,0,0,0,0';
             }
-            $data['petLv'] = $petLv;
-            $data['petDiffGrade'] = $petDiffGrade;
-            $data['petRandomGrade'] = $petRandomGrade;
-            $data['addBP'] = $addBP;
+
             if ($petLv && $petDiffGrade && $petGrade) {
                 $resultPet = $this->pet_model->genPet($petGrade, $petLv, $petDiffGrade, $petRandomGrade, $addBP);
                 $tmpStr = '亲，你要的'.$petLv.'级的'.$petName.'来了。<br>';
