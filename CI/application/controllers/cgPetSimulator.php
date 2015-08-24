@@ -74,6 +74,8 @@ class CgPetSimulator extends CI_Controller {
                 $tmpStr .= '血, 魔, 攻, 防, 敏, 精神, 回复分别是：<br>';
                 $tmpStr .= implode(' ', $resultPet);
                 $data['result'] = $tmpStr;
+                $data['resulttmp'] = $resultPet['hp'].' '.$resultPet['mp'].' '.$resultPet['atk'].' '.$resultPet['def'].' '.$resultPet['egi'].' ';
+                $data['resulttmp'] .= $petLv.' '.$petName.' '.($petLv - 1).' no';
             }
             $this->load->view('cgPetSimulator',$data);
             return;

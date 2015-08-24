@@ -18,6 +18,161 @@ class Pet_model extends CI_Model {
         }
         return $result;
     }
+    public function getAddBPByCond($lv, $addBPMethod, $rBP)
+    {
+        if ($lv <= 0) {
+            return array();
+        }
+        if ($rBP >= $lv) {
+            return array();
+        }
+        $result = $this->arrayToGrade(array(0,0,0,0,0));
+        switch ($addBPMethod) {
+            case 'xue':
+            case 'gong':
+            case 'fang':
+            case 'min':
+            case 'mo':
+                $result[$addBPMethod] += $lv-$rBP-1;
+                return $result;
+                break;
+            case 'no':
+                return $result;
+                break;
+            case 'hun':
+                break;
+            default:
+                return array();
+                break;
+        }
+    }
+    public function calcLv1Pet($petData, $petGrade)
+    {
+        $dataBased = array();
+        foreach ($petGrade as $key => $g) {
+            $dataBased [$key]= max($g-4,0)*20;
+        }
+        $petData = explode(' ',$petData);
+        $remain = array();
+        $remain['hp'] = $petData[0]*1000 - 20*1000 - $this->pet_model->getPropFromBP('hp', $dataBased);
+        $remain['mp'] = $petData[1]*1000 - 20*1000 - $this->pet_model->getPropFromBP('mp', $dataBased);
+        $remain['atk'] = $petData[2]*1000 - 20*1000 - $this->pet_model->getPropFromBP('atk', $dataBased);
+        $remain['def'] = $petData[3]*1000 - 20*1000 - $this->pet_model->getPropFromBP('def', $dataBased);
+        $remain['egi'] = $petData[4]*1000 - 20*1000 - $this->pet_model->getPropFromBP('egi', $dataBased);
+        if (count($petData) == 7) {
+            $remain['spr'] = $petData[5]*1000 - 100*1000 - $this->pet_model->getPropFromBP('spr', $dataBased);
+            $remain['rec'] = $petData[6]*1000 - 100*1000 - $this->pet_model->getPropFromBP('rec', $dataBased);
+        }
+
+        $results = $this->pet_model->getOriginResultByRemain($remain);
+        $outs = 0;
+        $petResult = array();
+        foreach ($results as $key => $result) {
+            $outs += $result->outs;
+        }
+
+        foreach ($results as $key => $result) {
+            $petResult []= $this->pet_model->sumGrade($result->grade).'d :: '.$result->grade.',    '.round($result->outs/$outs*100, 2).'%<br>';
+        }
+        return $petResult?$petResult:array('无解！！');
+    }
+    public function calcLvHighPetPure($petData, $petGrade, $lv, $addBPMethod, $rBP)
+    {
+
+            $petData = explode(' ', $petData);
+            $grade = $petGrade;
+
+
+            $prop = array($petData[0],$petData[1],$petData[2],$petData[3],$petData[4]);
+            $addBP = $this->pet_model->getAddBPByCond($lv, $addBPMethod, $rBP);
+            if (! $addBP) {
+                return array('加点不合法！');
+            }
+            $bp = $this->pet_model->getBPByProp($prop);
+            $bprange = $this->pet_model->getBPRangeByProp($prop);
+            $bpsql2min = minus($bprange[0], $addBP);
+            $bpsql2max = minus($bprange[1], $addBP);
+            //print_r($grade);
+            //$grade = array('xue'=>$grade[0]->xue,'gong'=>$grade[0]->gong,'fang'=>$grade[0]->fang,'min'=>$grade[0]->min,'mo'=>$grade[0]->mo);
+            //echo implode('/', $grade).'<br>';
+
+            $maxdg = array();
+            $mindg = array();
+            foreach ($bpsql2max as $key => $value ) {
+                $tmp = $value / ( ($lv-1) * 0.04 +0.2);
+                //$tmp = ($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2));
+                $maxdg[$key] = intval($tmp);
+                $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
+                //echo $r.'/';
+            }
+            //echo '<br>';
+            foreach ($bpsql2min as $key => $value ) {
+                $tmp = $value / ( ($lv-1) * 0.042 +0.2);
+                //$tmp = ( $value / ( ($lv-1) * $this->pet_model->tnt($grade[$key]) / ($grade[$key]) + 0.2 ) );
+                $mindg[$key] = intval($tmp);
+                $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
+                //echo $tmp.'/';
+            }
+            //print_r($mindg);
+            //print_r($maxdg);
+            $result = array();
+            for ($xue=$mindg['xue']; $xue <=$maxdg['xue'] ; $xue++) {
+                for ($gong=$mindg['gong']; $gong <=$maxdg['gong'] ; $gong++) {
+                    for ($fang=$mindg['fang']; $fang <=$maxdg['fang'] ; $fang++) {
+                        for ($min=$mindg['min']; $min <=$maxdg['min'] ; $min++) {
+                            for ($mo=$mindg['mo']; $mo <=$maxdg['mo'] ; $mo++) {
+                                $summinr = 0;//每项bp扣除这个档次的bp的成长值和初始值的最大值剩下的总和的最小值，应该小于等于2+加点总和
+                                $summaxr = 0;
+                                $rg = array();//随机档
+                                foreach ($bpsql2min as $key => $value ) {
+                                    $rg[$key] = array();
+                                    $rmin= $bpsql2min[$key] - ($lv-1)*$this->pet_model->tnt($$key) - 0.2*$$key;
+                                    $summinr +=$rmin;
+                                    $rmax= $bpsql2max[$key] - ($lv-1)*$this->pet_model->tnt($$key) - 0.2*$$key;
+                                    $summaxr +=$rmax;
+                                    //echo $rmin.'/'.$rmax.'<br>';
+                                    for ($i=intval($rmin/0.2)*0.2; $i <= intval($rmax/0.2)*0.2 ; $i += 0.2) {
+                                        $rg[$key][] = $i;
+                                    }
+                                }
+                                if ($summinr<=2 && $summaxr>=2) {
+
+                                    for ($i=0; $i < count($rg['xue']) ; $i++) {
+                                        for ($j=0; $j < count($rg['gong']) ; $j++) {
+                                            for ($k=0; $k < count($rg['fang']) ; $k++) {
+                                                for ($m=0; $m < count($rg['min']) ; $m++) {
+                                                    for ($n=0; $n < count($rg['mo']) ; $n++) {
+                                                        $sum = $rg['xue'][$i] + $rg['gong'][$j] + $rg['fang'][$k] + $rg['min'][$m] + $rg['mo'][$n];
+                                                        if ($sum == 2) {
+
+                                                            $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
+                                                            $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
+                                                            $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
+                                                            if ($pettemp['hp'] == $prop[0] && $pettemp['mp'] == $prop[1] && $pettemp['atk'] == $prop[2] && $pettemp['def'] == $prop[3] && $pettemp['egi'] == $prop[4]) {
+                                                                //echo ($rg['xue'][$i]*5).'/'.($rg['gong'][$j]*5).'/'.($rg['fang'][$k]*5).'/'.($rg['min'][$m]*5).'/'.($rg['mo'][$n]*5).':::';
+                                                                $result[] = '随机档：'.$rgrade.'；掉档:'.$dgrade.'<br>';
+
+                                                                //echo ($xue-$grade['xue']).'/'. ($gong-$grade['gong']).'/'. ($fang-$grade['fang']).'/'. ($min-$grade['min']).'/'. ($mo-$grade['mo']).'/'.'<br>';
+
+                                                            }
+
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            return $result;
+
+    }
+
     public function genPet($grade, $lv, $diffGrade, $randomGrade, $addBP, $intResult = true, $times = 20, $originLv = 1, $series = 0)
     {
         $this->load->helper('vector');
@@ -35,11 +190,11 @@ class Pet_model extends CI_Model {
         $grownBP = mul(($lv - 1)*100, $this->tnt($grownGrade));
         //echo "grown";print_r($grownBP);
         $totalBP = int(plus($lvOneTotalBP, plus($grownBP, $addBP)));
-        //print_r($totalBP);
         foreach ($base as $type => $value) {
             $tmp = $this->getPropFromBP($type, $totalBP);
             $base[$type] += $tmp;
         }
+        $base = array_merge($base, mul(10, $totalBP));
         if ($intResult) {
             return int(mul(0.001, $base));
         } else {
@@ -96,6 +251,53 @@ class Pet_model extends CI_Model {
         $this->db->where_in('valueId', $data);
         return $this->db->get('prop_to_bp')->result()[0];
     }
+    public function getBPRangeByProp($prop = array())
+    {
+        if (count($prop)<5) {
+            return array();
+        }
+        $data = array();
+        for ($i=0; $i < 5; $i++) {
+            $data[] = $i*10000+$prop[$i];
+        }
+        $sql = "SELECT
+                max(a.xue+b.xue+c.xue+d.xue+e.xue) as xuemax,
+                max(a.gong+b.gong+c.gong+d.gong+e.gong) as gongmax,
+                max(a.fang+b.fang+c.fang+d.fang+e.fang) as fangmax,
+                max(a.min+b.min+c.min+d.min+e.min) as minmax,
+                max(a.mo+b.mo+c.mo+d.mo+e.mo )as momax,
+                min(a.xue+b.xue+c.xue+d.xue+e.xue) as xuemin,
+                min(a.gong+b.gong+c.gong+d.gong+e.gong) as gongmin,
+                min(a.fang+b.fang+c.fang+d.fang+e.fang) as fangmin,
+                min(a.min+b.min+c.min+d.min+e.min) as minmin,
+                min(a.mo+b.mo+c.mo+d.mo+e.mo ) as momin
+                FROM `prop_to_bp` as a
+                join `prop_to_bp` as b
+                join `prop_to_bp` as c
+                join `prop_to_bp` as d
+                join `prop_to_bp` as e
+                where a.valueid in (".($data[0]).",".($data[0]+1).")
+                and b.valueid in (".($data[1]).",".($data[1]+1).")
+                and c.valueid in (".($data[2]).",".($data[2]+1).")
+                and d.valueid in (".($data[3]).",".($data[3]+1).")
+                and e.valueid in (".($data[4]).",".($data[4]+1).")";
+        $result = $this->db->query($sql)->result()[0];
+        $range = array();
+        $range[0] = array();
+        $range[1] = array();
+        $range[0]['xue'] = $result->xuemin/10000;
+        $range[0]['gong'] = $result->gongmin/10000;
+        $range[0]['fang'] = $result->fangmin/10000;
+        $range[0]['min'] = $result->minmin/10000;
+        $range[0]['mo'] = $result->momin/10000;
+        $range[1]['xue'] = $result->xuemax/10000;
+        $range[1]['gong'] = $result->gongmax/10000;
+        $range[1]['fang'] = $result->fangmax/10000;
+        $range[1]['min'] = $result->minmax/10000;
+        $range[1]['mo'] = $result->momax/10000;
+        return $range;
+    }
+
     public function getGradesBySearch($name = '')
     {
         if (!$name) {
