@@ -18,11 +18,33 @@ class Cgpetcalc extends CI_Controller {
             $data['petLv'] = '';
             $data['rBP'] = '';
             $data['addBPMethod'] = 'no';
+            $data['rBPprop'] = 'readonly';
 
+            $petLv = $this->input->post('petLv');
+            if ($petLv) {
+                $data['petLv'] = $petLv;
+            } else {
+                $data['petLv'] = 1;
+            }
             $petName = $this->input->post('petList');
             if (!$petName) {
                 $petName = $this->input->post('petName');
             }
+            $addBPMethod = $this->input->post('addBPMethod');
+            if ($addBPMethod) {
+                $data['addBPMethod'] = $addBPMethod;
+            }
+
+            if ($addBPMethod == 'no') {
+                $rBP = $petLv-1;
+            } elseif ($addBPMethod == 'hun') {
+                $rBP = '';
+                $data['rBPprop'] = 'required';
+            } else {
+                $rBP = 0;
+            }
+            $data['rBP'] = $rBP;
+
             $names = $this->pet_model->getGradesBySearch($petName);
             if (count($names) == 0) {
                 $data['petName'] = $petName;
@@ -30,11 +52,11 @@ class Cgpetcalc extends CI_Controller {
             } elseif (count($names) == 1) {
                 $petName = $names[0]->name;
                 $petGrade = $this->pet_model->petKindToGrade($names[0]);
-                $petLv = $this->input->post('petLv');
 
-                $data['petLv'] = $petLv;
+
                 $data['petName'] = $petName;
                 $data['petGrade'] = implode(' ', $petGrade);
+
             } else {
                 $petNames = array();
                 foreach ($names as $key => $name) {
@@ -53,10 +75,7 @@ class Cgpetcalc extends CI_Controller {
                 if ($petLv == 1) {
                     $data['petResult'] = $this->pet_model->calcLv1Pet($petData, $petGrade);
                 } else {
-                    $addBPMethod = $this->input->post('addBPMethod');
-                    $rBP = $this->input->post('rBP');
-                    $data['rBP'] = $rBP;
-                    $data['addBPMethod'] = $addBPMethod;
+
 
                     if ($addBPMethod != 'hun') {
                         $data['petResult'] = $this->pet_model->calcLvHighPetPure($petData, $petGrade, $petLv, $addBPMethod, $rBP);

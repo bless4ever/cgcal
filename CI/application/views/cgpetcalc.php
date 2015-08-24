@@ -28,8 +28,8 @@
         }
         ?>
         宠物档次<input type=text name="petGrade" value="<?php echo $petGrade?>" style=" width:120px" placeholder="档次将被自动抓取" readonly>（暂不支持自定义）<br>
-        宠物等级<input type=text name="petLv" style=" width:40px" placeholder="1" value="<?php echo $petLv?>">请输入宠物等级<br>
-        加点方式<select name="addBPMethod">
+        宠物等级<input type=text name="petLv" style=" width:40px" placeholder="1" value="<?php echo $petLv?>" onchange="submit();">请输入宠物等级<br>
+        加点方式<select name="addBPMethod" onchange="submit();">
             <option value ="xue" <?php echo ($addBPMethod=='xue'?'selected':'');?> >纯血</option>
             <option value ="gong" <?php echo ($addBPMethod=='gong'?'selected':'');?> >纯攻</option>
             <option value ="fang" <?php echo ($addBPMethod=='fang'?'selected':'');?> >纯防</option>
@@ -38,7 +38,7 @@
             <option value ="no" <?php echo ($addBPMethod=='no'?'selected':'');?> >不加</option>
             <option value ="hun" <?php echo ($addBPMethod=='hun'?'selected':'');?> >混加</option>
         </select>
-        余点：<input type=text name="rBP" style=" width:20px" placeholder="0" value="<?php echo $rBP?>">请确认低级未加的宠物的余点！<br>
+        余点：<input type=text name="rBP" style=" width:20px" placeholder="0" value="<?php echo $rBP?>" <?php echo $rBPprop?> ><?php echo ($addBPMethod=='no'?'请确认低级未加的宠物的余点！':'');?><br>
         <br>
         当前数据<input type=text name="petData" value="<?php echo $petData?>" style=" width:280px" placeholder="输入血魔攻防敏，以空格分开，可加精神回复"><br>
         <input type = "submit" value = "提交" >
