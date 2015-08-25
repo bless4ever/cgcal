@@ -10,50 +10,33 @@ class Cgpetcalc extends CI_Controller {
         public function index()
         {
             $this->load->helper('vector');
-            $data['petData'] ='';
-            $data['petResult'] ='';
-            $data['petName'] = '';
-            $data['petGrade'] = '';
-            $data['petSelect'] = '';
-            $data['petLv'] = '';
-            $data['rBP'] = '';
-            $data['addBPMethod'] = 'no';
-            $data['rBPprop'] = 'readonly';
+            $data['petData'] = $this->input->post('petData');
+            $data['petName'] = $this->input->post('petName');
+            $data['petSelect'] = $this->input->post('petSelect');
+            $data['petGrade'] = $this->input->post('petGrade');
+            $data['petLv'] = $this->input->post('petLv');
+            $data['addBPMethod'] = $this->input->post('addBPMethod');
+            $data['petLv'] = $this->input->post('petLv');
 
-            $petLv = $this->input->post('petLv');
-            if ($petLv) {
-                $data['petLv'] = $petLv;
-            } else {
-                $data['petLv'] = 1;
-            }
+
+            $data['rBP'] = $this->input->post('rBP');
+            $data['rBPprop'] = 'readonly';
+            $data['petResult'] = '';
+            $data['focus'] = 'petName';
+
             $petName = $this->input->post('petList');
             if (!$petName) {
-                $petName = $this->input->post('petName');
+                $petName = $data['petName'];
             }
-            $addBPMethod = $this->input->post('addBPMethod');
-            if ($addBPMethod) {
-                $data['addBPMethod'] = $addBPMethod;
-            }
-
-            if ($addBPMethod == 'no') {
-                $rBP = $petLv-1;
-            } elseif ($addBPMethod == 'hun') {
-                $rBP = '';
-                $data['rBPprop'] = 'required';
-            } else {
-                $rBP = 0;
-            }
-            $data['rBP'] = $rBP;
-
             $names = $this->pet_model->getGradesBySearch($petName);
+            $petGrade = array();
+
             if (count($names) == 0) {
                 $data['petName'] = $petName;
-
+                $data['petGrade'] = '';
             } elseif (count($names) == 1) {
                 $petName = $names[0]->name;
                 $petGrade = $this->pet_model->petKindToGrade($names[0]);
-
-
                 $data['petName'] = $petName;
                 $data['petGrade'] = implode(' ', $petGrade);
 
@@ -62,16 +45,45 @@ class Cgpetcalc extends CI_Controller {
                 foreach ($names as $key => $name) {
                     $petNames [] = $name->name;
                 }
-
+                $data['petGrade'] = '';
                 $data['petSelect']=$petNames;
                 $data['petName'] = $petName;
+            }
+
+
+            $petLv = $data['petLv'];
+            if (! $petLv) {
+                $petLv = 1;
 
             }
-            $petData = $this->input->post('petData');
-            $data['petData'] = $petData;
-            if (!$petData || count($names) != 1) {
 
+            $addBPMethod = $data['addBPMethod'];
+            if (! $addBPMethod) {
+                $addBPMethod = 'no';
+                $data['addBPMethod'] = $addBPMethod;
+            }
+            if ($addBPMethod == 'no') {
+                $rBP = $petLv-1;
+                if ($data['petLv']) {
+                    $data['rBP'] = $rBP;
+                } else {
+                    $data['rBP'] = '';
+                }
+
+                $data['rBPprop'] = 'readonly';
+            } elseif ($addBPMethod == 'hun') {
+                $rBP = 0;
+                $data['rBP'] = $rBP;
+                $data['rBPprop'] = 'required';
             } else {
+                $rBP = 0;
+                $data['rBP'] = $rBP;
+                $data['rBPprop'] = 'readonly';
+            }
+
+
+            $petData = $data['petData'];
+            if ($petGrade && $petData){
                 if ($petLv == 1) {
                     $data['petResult'] = $this->pet_model->calcLv1Pet($petData, $petGrade);
                 } else {
@@ -79,14 +91,30 @@ class Cgpetcalc extends CI_Controller {
 
                     if ($addBPMethod != 'hun') {
                         $data['petResult'] = $this->pet_model->calcLvHighPetPure($petData, $petGrade, $petLv, $addBPMethod, $rBP);
+                        if (! $data['petResult']) {
+                            $data['petResult'] = array('无解！请核对数据。<br>如果与魔物结果不负，请将结果反馈给作者，谢谢');
+                        }
                     } else {
                         $data['petResult'] = array('功能稍后增加！');
                     }
 
                 }
+            }
+            if (! $data['petName'] || ! $data['petGrade']) {
+                if ($data['petSelect']) {
+                    $data['focus'] = 'petList';
+                } else {
+                    $data['focus'] = 'petName';
 
-
-
+                }
+            } elseif (! $data['petLv'] ) {
+                $data['focus'] = 'petLv';
+            } elseif ($addBPMethod == 'hun' ) {
+                $data['focus'] = 'rBP';
+            } elseif (! $rBP) {
+                $data['focus'] = 'addBPMethod';
+            } else {
+                $data['focus'] = 'petData';
             }
             $this->load->view('cgpetcalc',$data);
             return;
