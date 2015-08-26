@@ -85,17 +85,20 @@ class Cgpetcalc extends CI_Controller {
             $petData = $data['petData'];
             if ($petGrade && $petData){
                 if ($petLv == 1) {
-                    $data['petResult'] = $this->pet_model->calcLv1Pet($petData, $petGrade);
+                    $allResult = $this->pet_model->calcLv1Pet($petData, $petGrade);
+                    $data['petResult'] = $this->pet_model->genResultForLv1($allResult);
+                    if (! $data['petResult']) {
+                        $data['petResult'] = array('type'=>'无解', 'view' => array('请核对数据。<br>如果与魔物结果不负，请将结果反馈给作者，谢谢'));
+                    }
                 } else {
-
-
                     if ($addBPMethod != 'hun') {
-                        $data['petResult'] = $this->pet_model->calcLvHighPetPure($petData, $petGrade, $petLv, $addBPMethod, $rBP);
+                        $allResult = $this->pet_model->calcLvHighPetPure($petData, $petGrade, $petLv, $addBPMethod, $rBP);
+                        $data['petResult'] = $this->pet_model->genResultForHighPetPure($allResult);
                         if (! $data['petResult']) {
-                            $data['petResult'] = array('无解！请核对数据。<br>如果与魔物结果不负，请将结果反馈给作者，谢谢');
+                            $data['petResult'] = array('type'=>'无解', 'view' => array('请核对数据。<br>如果与魔物结果不负，请将结果反馈给作者，谢谢'));
                         }
                     } else {
-                        $data['petResult'] = array('功能稍后增加！');
+                        $data['petResult'] = array('type'=>'尚待完善', 'view' => array('此功能稍后添加！'));
                     }
 
                 }
@@ -217,6 +220,7 @@ class Cgpetcalc extends CI_Controller {
         echo '<meta charset = utf8>';
         $this->load->helper('vector');
         $pets = array();
+        /*
         $pets[] = '1947 2899 270 254 184 93 星菇 0 mo 242 158::lv93 00002 162 52 40 52 242';
         $pets[] = '309 230 110 59 46 10 改造僵尸 0 gong 加攻';
         $pets[] = '430 254 138 84 71 17 改造猎豹 16 no 00321  17级未加';
@@ -224,9 +228,10 @@ class Cgpetcalc extends CI_Controller {
         $pets[] = '553 461 219 153 118 32 螳螂 31 no';
         $pets[] = '391 327 158 113 88 21 螳螂 20 no';
         $pets[] = '244 206 103 76 61 11 螳螂 10 no';
+        */
         $pets[] = '156 133 70 53 44 5 螳螂 4 no';
-        $pets[] = '97 85 47 39 34 1 螳螂 0 no';
-
+        //$pets[] = '97 85 47 39 34 1 螳螂 0 no';
+        $pets[] = '640 409 286 138 99 29 改造烈风哥布林 0 gong';
 
         foreach ($pets as $pet) {
             echo $pet;
@@ -256,7 +261,7 @@ class Cgpetcalc extends CI_Controller {
             foreach ($bpsql2max as $key => $value ) {
                 $tmp = $value / ( ($lv-1) * 0.04 +0.2);
                 //$tmp = ($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2));
-                $maxdg[$key] = intval($tmp);
+                $maxdg[$key] = min(intval($tmp), $grade[$key]);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
                 //echo $r.'/';
             }
@@ -264,7 +269,7 @@ class Cgpetcalc extends CI_Controller {
             foreach ($bpsql2min as $key => $value ) {
                 $tmp = $value / ( ($lv-1) * 0.042 +0.2);
                 //$tmp = ( $value / ( ($lv-1) * $this->pet_model->tnt($grade[$key]) / ($grade[$key]) + 0.2 ) );
-                $mindg[$key] = intval($tmp);
+                $mindg[$key] = max(intval($tmp), $grade[$key] - 4);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
                 //echo $tmp.'/';
             }
@@ -286,11 +291,12 @@ class Cgpetcalc extends CI_Controller {
                                     $rmax= $bpsql2max[$key] - ($lv-1)*$this->pet_model->tnt($$key) - 0.2*$$key;
                                     $summaxr +=$rmax;
                                     //echo $rmin.'/'.$rmax.'<br>';
-                                    for ($i=intval($rmin/0.2)*0.2; $i <= intval($rmax/0.2)*0.2 ; $i += 0.2) {
+                                    for ($i=max(intval($rmin/0.2)*0.2,0); $i <= min(intval($rmax/0.2)*0.2, 2) ; $i += 0.2) {
                                         $rg[$key][] = $i;
                                     }
                                 }
                                 if ($summinr<=2 && $summaxr>=2) {
+                                    //print_r($rg);
 
                                     for ($i=0; $i < count($rg['xue']) ; $i++) {
                                         for ($j=0; $j < count($rg['gong']) ; $j++) {
@@ -303,14 +309,11 @@ class Cgpetcalc extends CI_Controller {
                                                             $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
                                                             $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
                                                             $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
-                                                            if ($pettemp['hp'] == $prop[0] && $pettemp['mp'] == $prop[1] && $pettemp['atk'] == $prop[2] && $pettemp['def'] == $prop[3] && $pettemp['egi'] == $prop[4]) {
+                                                            $propDist = $this->pet_model->getPropDist($this->pet_model->petToProp($pettemp), $prop);
                                                                 //echo ($rg['xue'][$i]*5).'/'.($rg['gong'][$j]*5).'/'.($rg['fang'][$k]*5).'/'.($rg['min'][$m]*5).'/'.($rg['mo'][$n]*5).':::';
-                                                                echo $rgrade.'::'.$dgrade.'<br>';
+                                                                echo $rgrade.'::'.$dgrade.'='.$propDist.'<br>';
 
                                                                 //echo ($xue-$grade['xue']).'/'. ($gong-$grade['gong']).'/'. ($fang-$grade['fang']).'/'. ($min-$grade['min']).'/'. ($mo-$grade['mo']).'/'.'<br>';
-
-                                                            }
-
                                                         }
                                                     }
                                                 }

@@ -42,11 +42,14 @@
         余点：<input type=text name="rBP" style=" width:20px" placeholder="0" value="<?php echo $rBP?>" <?php echo $rBPprop?> ><?php echo ($addBPMethod=='no'?'请确认低级未加的宠物的余点！':'');?><br>
         <br>
         <input type = "submit" value = "提交" >
+        <br>
         <?php
         if ($petResult != ''){
-            echo '<p>计算结果</p>';
-            foreach ($petResult as $key => $result) {
+            echo $petResult['type'];
+            echo '<br>';
+            foreach ($petResult['view'] as $key => $result) {
                 echo $result;
+                echo '<br>';
             }
         }
         ?>

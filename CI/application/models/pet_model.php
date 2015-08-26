@@ -1,6 +1,7 @@
 <?php
 class Pet_model extends CI_Model {
     public function __construct() {
+        $this->load->helper('vector');
     }
     public function petKindToGrade($petKind)
     {
@@ -17,6 +18,14 @@ class Pet_model extends CI_Model {
             $result[$i] = hexdec(substr($chars, $i, 1));
         }
         return $result;
+    }
+    public function petToProp($pet)
+    {
+        return array($pet['hp'], $pet['mp'], $pet['atk'], $pet['def'], $pet['egi']);
+    }
+    public function getPropDist($prop_cal, $prop)
+    {
+        return normAbsPropWeight($prop_cal, $prop);
     }
     public function getAddBPByCond($lv, $addBPMethod, $rBP)
     {
@@ -46,6 +55,67 @@ class Pet_model extends CI_Model {
                 break;
         }
     }
+    public function genResultForHighPetPure($resultAll, $percentage = 0.2)
+    {
+        function resultSort($a, $b)
+        {
+            if ($a['dist'] == $b['dist']) {
+                return 0;
+            }
+            return $a['dist'] > $b['dist'] ? 1:-1;
+        }
+        usort($resultAll, 'resultSort');
+        $views = array();
+        $totalResult = count($resultAll);
+        $bestResults = array();
+        $type = '';
+        if ($resultAll[0]['dist'] == 0) {
+            $type = '准确解';
+            foreach ($resultAll as $key => $result) {
+                if ($result['dist'] == 0) {
+                    $bestResults[] = $result;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            $type = '最优解';
+            $tmpDiff = 0;
+            foreach ($resultAll as $key => $result) {
+                if ($key<$percentage * $totalResult) {
+                    $bestResults[] = $result;
+                    continue;
+                } elseif ($tmpDiff == 0) {
+                    $tmpDiff = $result['dist'];
+                    $bestResults[] = $result;
+                    continue;
+                }
+                if ($result['dist'] <= $tmpDiff) {
+                    $bestResults[] = $result;
+                } else {
+                    break;
+                }
+            }
+        }
+        $dGradeMapRGrades = array();
+        foreach ($bestResults as $key => $result) {
+            if (array_key_exists($result['dg'], $dGradeMapRGrades)) {
+                $dGradeMapRGrades[$result['dg']] .= ','.$result['rg'];
+            } else {
+                $dGradeMapRGrades[$result['dg']] = $result['rg'];
+            }
+        }
+        foreach ($dGradeMapRGrades as $key => $gradeMap) {
+            $views[] = '掉档: '.$key. ', 随机档:('.$gradeMap.') '.' 概率'.round((strlen($gradeMap)+1)/6/count($bestResults)*100,2).'%';
+        }
+
+
+        return array('type' => $type, 'view' => $views);
+    }
+    public function genResultForLv1($resultAll)
+    {
+        return array('type' => '1级宠物查询综合解', 'view' => $resultAll);
+    }
     public function calcLv1Pet($petData, $petGrade)
     {
         $dataBased = array();
@@ -74,7 +144,7 @@ class Pet_model extends CI_Model {
         foreach ($results as $key => $result) {
             $petResult []= $this->pet_model->sumGrade($result->grade).'d :: '.$result->grade.',    '.round($result->outs/$outs*100, 2).'%<br>';
         }
-        return $petResult?$petResult:array('无解！！');
+        return $petResult?$petResult:array();
     }
     public function calcLvHighPetPure($petData, $petGrade, $lv, $addBPMethod, $rBP)
     {
@@ -101,7 +171,7 @@ class Pet_model extends CI_Model {
             foreach ($bpsql2max as $key => $value ) {
                 $tmp = $value / ( ($lv-1) * 0.04 +0.2);
                 //$tmp = ($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2));
-                $maxdg[$key] = intval($tmp);
+                $maxdg[$key] = min(intval($tmp), $grade[$key]);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
                 //echo $r.'/';
             }
@@ -109,7 +179,7 @@ class Pet_model extends CI_Model {
             foreach ($bpsql2min as $key => $value ) {
                 $tmp = $value / ( ($lv-1) * 0.042 +0.2);
                 //$tmp = ( $value / ( ($lv-1) * $this->pet_model->tnt($grade[$key]) / ($grade[$key]) + 0.2 ) );
-                $mindg[$key] = intval($tmp);
+                $mindg[$key] = max(intval($tmp), $grade[$key] - 4);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
                 //echo $tmp.'/';
             }
@@ -131,7 +201,7 @@ class Pet_model extends CI_Model {
                                     $rmax= $bpsql2max[$key] - ($lv-1)*$this->pet_model->tnt($$key) - 0.2*$$key;
                                     $summaxr +=$rmax;
                                     //echo $rmin.'/'.$rmax.'<br>';
-                                    for ($i=intval($rmin/0.2)*0.2; $i <= intval($rmax/0.2)*0.2 ; $i += 0.2) {
+                                    for ($i=max(intval($rmin/0.2)*0.2,0); $i <= min(intval($rmax/0.2)*0.2, 2) ; $i += 0.2) {
                                         $rg[$key][] = $i;
                                     }
                                 }
@@ -148,13 +218,12 @@ class Pet_model extends CI_Model {
                                                             $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
                                                             $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
                                                             $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
-                                                            if ($pettemp['hp'] == $prop[0] && $pettemp['mp'] == $prop[1] && $pettemp['atk'] == $prop[2] && $pettemp['def'] == $prop[3] && $pettemp['egi'] == $prop[4]) {
-                                                                //echo ($rg['xue'][$i]*5).'/'.($rg['gong'][$j]*5).'/'.($rg['fang'][$k]*5).'/'.($rg['min'][$m]*5).'/'.($rg['mo'][$n]*5).':::';
-                                                                $result[] = '随机档：'.$rgrade.'；掉档:'.$dgrade.'<br>';
-
-                                                                //echo ($xue-$grade['xue']).'/'. ($gong-$grade['gong']).'/'. ($fang-$grade['fang']).'/'. ($min-$grade['min']).'/'. ($mo-$grade['mo']).'/'.'<br>';
-
-                                                            }
+                                                            $propDist = $this->pet_model->getPropDist($this->pet_model->petToProp($pettemp), $prop);
+                                                            $possibleResult = array();
+                                                            $possibleResult['rg'] = $rgrade;
+                                                            $possibleResult['dg'] = $dgrade;
+                                                            $possibleResult['dist'] = $propDist;
+                                                            $result[] = $possibleResult;
 
                                                         }
                                                     }

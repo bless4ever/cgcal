@@ -1,5 +1,50 @@
 <?php
-
+if (!function_exists('normAbsPropWeight'))
+{
+    function normAbsPropWeight($a, $b)
+    {
+        if ( ! is_array($a) || ! is_array($b) || count($a) != count($b) ) {
+            return array();
+        }
+        $result = 0;
+        $diff = minus($a, $b);
+        $weight = array(1,1,2,2,2,5,5);//TBD!!!!!
+        foreach ($diff as $key => $value) {
+            $result += abs($value)*$weight[$key];
+        }
+        return $result/count($diff);
+    }
+}
+if (!function_exists('normAbs'))
+{
+    function normAbs($a, $b)
+    {
+        if ( ! is_array($a) || ! is_array($b) || count($a) != count($b) ) {
+            return array();
+        }
+        $result = 0;
+        $diff = minus($a, $b);
+        foreach ($diff as $key => $value) {
+            $result += abs($value);
+        }
+        return $result/count($diff);
+    }
+}
+if (!function_exists('normSquare'))
+{
+    function normSquare($a, $b)
+    {
+        if ( ! is_array($a) || ! is_array($b) || count($a) != count($b) ) {
+            return array();
+        }
+        $result = 0;
+        $diff = minus($a, $b);
+        foreach ($diff as $key => $value) {
+            $result += abs($value*$value);
+        }
+        return sqrt($result)/count($diff);
+    }
+}
 if (!function_exists('mul'))
 {
     function mul($a, $b)
