@@ -64,6 +64,9 @@ class Pet_model extends CI_Model {
             }
             return $a['dist'] > $b['dist'] ? 1:-1;
         }
+        if (!$resultAll) {
+            return array();
+        }
         usort($resultAll, 'resultSort');
         $views = array();
         $totalResult = count($resultAll);
