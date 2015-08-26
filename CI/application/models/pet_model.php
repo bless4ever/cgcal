@@ -252,9 +252,9 @@ class Pet_model extends CI_Model {
 
         $base = mul(1000, $base);
         $addBP = mul(100, $addBP);
-        $grownGrade = minus($grade, $diffGrade);
+        $grownGrade = up0(minus($grade, $diffGrade));
 
-        $lvOneTotalBP = mul($times, plus(minus($grade, $diffGrade), $randomGrade));
+        $lvOneTotalBP = mul($times, plus($grownGrade, $randomGrade));
         //echo "1bp:";print_r($lvOneTotalBP);
         $grownBP = mul(($lv - 1)*100, $this->tnt($grownGrade));
         //echo "grown";print_r($grownBP);

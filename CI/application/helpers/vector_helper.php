@@ -97,6 +97,16 @@ if (!function_exists('int'))
         return $a;
     }
 }
+if (!function_exists('up0'))
+{
+    function up0($a)
+    {
+        foreach ($a as $key => &$value) {
+            $value = max($value, 0);
+        }
+        return $a;
+    }
+}
 /*
 if (!function_exists('mul'))
 {
