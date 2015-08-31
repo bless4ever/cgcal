@@ -229,7 +229,7 @@ class Cgpetcalc extends CI_Controller {
         $pets[] = '391 327 158 113 88 21 螳螂 20 no';
         $pets[] = '244 206 103 76 61 11 螳螂 10 no';
         */
-        $pets[] = '156 133 70 53 44 5 螳螂 4 no';
+        //$pets[] = '156 133 70 53 44 5 螳螂 4 no';
         //$pets[] = '97 85 47 39 34 1 螳螂 0 no';
         $pets[] = '640 409 286 138 99 29 改造烈风哥布林 0 gong';
 
@@ -311,7 +311,7 @@ class Cgpetcalc extends CI_Controller {
                                                             $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
                                                             $propDist = $this->pet_model->getPropDist($this->pet_model->petToProp($pettemp), $prop);
                                                                 //echo ($rg['xue'][$i]*5).'/'.($rg['gong'][$j]*5).'/'.($rg['fang'][$k]*5).'/'.($rg['min'][$m]*5).'/'.($rg['mo'][$n]*5).':::';
-                                                                echo $rgrade.'::'.$dgrade.'='.$propDist.'<br>';
+                                                                echo $rgrade.'::'.$dgrade.'='.$propDist.' '.sum(minus($this->pet_model->petToProp($pettemp), $prop)).'<br>';
 
                                                                 //echo ($xue-$grade['xue']).'/'. ($gong-$grade['gong']).'/'. ($fang-$grade['fang']).'/'. ($min-$grade['min']).'/'. ($mo-$grade['mo']).'/'.'<br>';
                                                         }

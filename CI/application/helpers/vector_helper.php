@@ -97,6 +97,17 @@ if (!function_exists('int'))
         return $a;
     }
 }
+if (!function_exists('sum'))
+{
+    function sum($a)
+    {
+        $result = 0;
+        foreach ($a as $key => $value) {
+            $result += ($value);
+        }
+        return $result;
+    }
+}
 if (!function_exists('up0'))
 {
     function up0($a)
