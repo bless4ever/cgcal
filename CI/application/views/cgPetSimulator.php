@@ -42,7 +42,7 @@
             echo '<p>模拟结果</p>';
 
                 echo $result.'<br>';
-                echo $resulttmp;
+                //echo $resulttmp;
 
         }
         ?>

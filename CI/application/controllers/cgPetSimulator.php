@@ -68,14 +68,22 @@ class CgPetSimulator extends CI_Controller {
             }
 
             if ($petLv && $petDiffGrade && $petGrade) {
-                $resultPet = $this->pet_model->genPet($petGrade, $petLv, $petDiffGrade, $petRandomGrade, $addBP)[0];
+                $resultPet = $this->pet_model->genPet($petGrade, $petLv, $petDiffGrade, $petRandomGrade, $addBP);
                 $tmpStr = '亲，你要的'.$petLv.'级的'.$petName.'来了。<br>';
                 $tmpStr .= '掉档：'.$petDiffGrade.'，随机档：'.$petRandomGrade.'<br>';
-                $tmpStr .= '血, 魔, 攻, 防, 敏, 精神, 回复分别是：<br>';
-                $tmpStr .= implode(' ', $resultPet);
+                $tmpStr .= '血, 魔, 攻, 防, 敏, 精神, 回复以及BP分别是：<br>';
+                $tmpStr .= implode(' ', array_slice($resultPet[0], 0, 7));
+                $tmpStr .= ', BP:'.implode(' ', array_slice($resultPet[0], 7));
+                $tmpStr .= '<br>血, 魔, 攻, 防, 敏, 精神, 回复的最小值以及BP分别是：（受到随机小量影响最低结果）<br>';
+                $tmpStr .= implode(' ', array_slice($resultPet[1], 0, 7));
+                $tmpStr .= ', BP:'.implode(' ', array_slice($resultPet[1], 7));
+                $tmpStr .= '<br>血, 魔, 攻, 防, 敏, 精神, 回复的最大值以及BP分别是：（受到随机小量影响最高结果）<br>';
+                $tmpStr .= implode(' ', array_slice($resultPet[2], 0, 7));
+                $tmpStr .= ', BP:'.implode(' ', array_slice($resultPet[2], 7));
+
                 $data['result'] = $tmpStr;
-                $data['resulttmp'] = $resultPet['hp'].' '.$resultPet['mp'].' '.$resultPet['atk'].' '.$resultPet['def'].' '.$resultPet['egi'].' ';
-                $data['resulttmp'] .= $petLv.' '.$petName.' '.($petLv - 1).' no';
+                //$data['resulttmp'] = $resultPet['hp'].' '.$resultPet['mp'].' '.$resultPet['atk'].' '.$resultPet['def'].' '.$resultPet['egi'].' ';
+                //$data['resulttmp'] .= $petLv.' '.$petName.' '.($petLv - 1).' no';
             }
             $this->load->view('cgPetSimulator',$data);
             return;
