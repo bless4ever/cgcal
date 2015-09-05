@@ -68,7 +68,7 @@ class CgPetSimulator extends CI_Controller {
             }
 
             if ($petLv && $petDiffGrade && $petGrade) {
-                $resultPet = $this->pet_model->genPet($petGrade, $petLv, $petDiffGrade, $petRandomGrade, $addBP);
+                $resultPet = $this->pet_model->genPet($petGrade, $petLv, $petDiffGrade, $petRandomGrade, $addBP)[0];
                 $tmpStr = '亲，你要的'.$petLv.'级的'.$petName.'来了。<br>';
                 $tmpStr .= '掉档：'.$petDiffGrade.'，随机档：'.$petRandomGrade.'<br>';
                 $tmpStr .= '血, 魔, 攻, 防, 敏, 精神, 回复分别是：<br>';

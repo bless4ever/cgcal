@@ -9,7 +9,7 @@ CI/application/controllers/dbinits.php
 CI/application/cache/*
 !CI/application/cache/index.html
 !CI/application/cache/.htaccess
-
+term/
 CI/application/logs/*
 !application/logs/index.html
 !application/logs/.htaccess

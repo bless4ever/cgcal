@@ -308,10 +308,14 @@ class Cgpetcalc extends CI_Controller {
 
                                                             $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
                                                             $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
-                                                            $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
+                                                            $propGenRange = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
+                                                            $inRange = $this->pet_model->checkPropInRange($prop, $propGenRange[1], $propGenRange[2]);
+                                                            $pettemp = $propGenRange[0];
                                                             $propDist = $this->pet_model->getPropDist($this->pet_model->petToProp($pettemp), $prop);
                                                                 //echo ($rg['xue'][$i]*5).'/'.($rg['gong'][$j]*5).'/'.($rg['fang'][$k]*5).'/'.($rg['min'][$m]*5).'/'.($rg['mo'][$n]*5).':::';
-                                                                echo $rgrade.'::'.$dgrade.'='.$propDist.' '.sum(minus($this->pet_model->petToProp($pettemp), $prop)).'<br>';
+                                                                if ($inRange) {
+                                                                    echo $rgrade.'::'.$dgrade.'='.$propDist.' '.sum(minus($this->pet_model->petToProp($pettemp), $prop)).'<br>';
+                                                                }
 
                                                                 //echo ($xue-$grade['xue']).'/'. ($gong-$grade['gong']).'/'. ($fang-$grade['fang']).'/'. ($min-$grade['min']).'/'. ($mo-$grade['mo']).'/'.'<br>';
                                                         }

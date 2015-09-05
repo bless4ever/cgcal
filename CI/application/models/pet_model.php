@@ -73,7 +73,7 @@ class Pet_model extends CI_Model {
         $bestResults = array();
         $type = '';
         if ($resultAll[0]['dist'] == 0) {
-            $type = '准确解';
+            $type = '<准确解>';
             foreach ($resultAll as $key => $result) {
                 if ($result['dist'] == 0) {
                     $bestResults[] = $result;
@@ -81,35 +81,33 @@ class Pet_model extends CI_Model {
                     break;
                 }
             }
-        } else {
-            $type = '最优解';
-            $tmpDiff = 0;
-            foreach ($resultAll as $key => $result) {
-                if ($key<$percentage * $totalResult) {
-                    $bestResults[] = $result;
-                    continue;
-                } elseif ($tmpDiff == 0) {
-                    $tmpDiff = $result['dist'];
-                    $bestResults[] = $result;
-                    continue;
+        }
+        if (count($bestResults) < count($resultAll)) {
+            $tmpDiff = false;
+            for ($i=count($bestResults); $i < count($resultAll); $i++) {
+                if ($resultAll[$i]['inRange']) {
+                    $bestResults[] = $resultAll[$i];
+                    $tmpDiff = true;
                 }
-                if ($result['dist'] <= $tmpDiff) {
-                    $bestResults[] = $result;
-                } else {
-                    break;
-                }
+            }
+            if ($tmpDiff) {
+                $type .= '<最优解*>';
             }
         }
         $dGradeMapRGrades = array();
+        $dGradeMapRGrades2 = array();
         foreach ($bestResults as $key => $result) {
             if (array_key_exists($result['dg'], $dGradeMapRGrades)) {
                 $dGradeMapRGrades[$result['dg']] .= ','.$result['rg'];
+                $dGradeMapRGrades2[$result['dg']] .= ','.$result['rg'].($result['dist']==0?'':'*');
+
             } else {
                 $dGradeMapRGrades[$result['dg']] = $result['rg'];
+                $dGradeMapRGrades2[$result['dg']] = $result['rg'].($result['inRange']==0?'':'*');
             }
         }
         foreach ($dGradeMapRGrades as $key => $gradeMap) {
-            $views[] = '掉档: '.$key. ', 随机档:('.$gradeMap.') '.' 概率'.round((strlen($gradeMap)+1)/6/count($bestResults)*100,2).'%';
+            $views[] = '掉档: '.$key. ', 随机档:('.$dGradeMapRGrades2[$key].') '.' 概率'.round((strlen($gradeMap)+1)/6/count($bestResults)*100,2).'%';
         }
 
 
@@ -220,12 +218,15 @@ class Pet_model extends CI_Model {
 
                                                             $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
                                                             $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
-                                                            $pettemp = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
+                                                            $petRange = $this->pet_model->genPet($grade, $lv, $dgrade, $rgrade, implode(',',$addBP));
+                                                            $pettemp = $petRange[0];
+                                                            $inRange = $this->pet_model->checkPropInRange($prop, $petRange[1], $petRange[2]);
                                                             $propDist = $this->pet_model->getPropDist($this->pet_model->petToProp($pettemp), $prop);
                                                             $possibleResult = array();
                                                             $possibleResult['rg'] = $rgrade;
                                                             $possibleResult['dg'] = $dgrade;
                                                             $possibleResult['dist'] = $propDist;
+                                                            $possibleResult['inRange'] = $inRange;
                                                             $result[] = $possibleResult;
 
                                                         }
@@ -268,13 +269,78 @@ class Pet_model extends CI_Model {
         }
         $base = array_merge($base, mul(10, $totalBP));
         if ($intResult) {
-            return int(mul(0.001, $base));
+            $base = int(mul(0.001, $base));
         } else {
-            return mul(0.001, $base);
+            $base = mul(0.001, $base);
+        }
+        $results = array();
+        $results[0] = $base;
+        //产生常见的maxmin
+        $rmmindiff = $this->arrayToGrade(array(0,0,0,0,0));
+        $rmmaxdiff = $this->arrayToGrade(array(0,0,0,0,0));
+        foreach ($grownGrade as $key => $gd) {
+            $gdmod = $gd % 5;
+            switch ($gdmod) {
+                case 0:
+                    $rmmindiff[$key] = -1*(min($lv-1, round(sqrt($lv-1)*6+1)))*0.5;
+                    $rmmaxdiff[$key] = +1*(min($lv-1, round(sqrt($lv-1)*6+1)))*0.5;
+                    break;
+                case 4:
+                case 1:
+                    $rmmindiff[$key] = -0.5*3;
+                    $rmmaxdiff[$key] = +0.5*3;
+                    break;
+                default:
+                    break;
+            }
         }
 
+        $totalBPRmmMax = plus($totalBP, $rmmaxdiff);
+        $propRmmMax = mul(1000,array('hp' => 20, 'mp' => 20, 'atk' => 20, 'def' => 20, 'egi' => 20, 'spr' => 100, 'rec' => 100));
+        $propRmmMin = mul(1000,array('hp' => 20, 'mp' => 20, 'atk' => 20, 'def' => 20, 'egi' => 20, 'spr' => 100, 'rec' => 100));
+        foreach ($propRmmMax as $type => $value) {
+            $tmp = $this->getPropFromBP($type, int($totalBPRmmMax));
+            $propRmmMax[$type] += $tmp;
+        }
+        $propRmmMax = array_merge($propRmmMax, mul(10, $totalBPRmmMax));
+        if ($intResult) {
+            $propRmmMax = int(mul(0.001, $propRmmMax));
+        } else {
+            $propRmmMax = mul(0.001, $propRmmMax);
+        }
+        $totalBPRmmMin = plus($totalBP, $rmmindiff);
+        foreach ($propRmmMin as $type => $value) {
+            $tmp = $this->getPropFromBP($type, int($totalBPRmmMin));
+            $propRmmMin[$type] += $tmp;
+        }
+        $propRmmMin = array_merge($propRmmMin, mul(10, $totalBPRmmMin));
+        if ($intResult) {
+            $propRmmMin = int(mul(0.001, $propRmmMin));
+        } else {
+            $propRmmMin = mul(0.001, $propRmmMin);
+        }
+        $results[1] = $propRmmMin;
+        $results[2] = $propRmmMax;
 
 
+
+        return $results;
+
+    }
+    public function checkPropInRange($origin, $min, $max, $count = 5)
+    {
+        $max = $this->petToProp($max);
+        $min = $this->petToProp($min);
+
+        for ($i=0; $i < $count; $i++) {
+            if ($origin[$i] > $max[$i]) {
+                return false;
+            }
+            if ($origin[$i] < $min[$i]) {
+                return false;
+            }
+        }
+        return true;
     }
     public function tnt($d)
     {
