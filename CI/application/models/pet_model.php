@@ -178,7 +178,7 @@ class Pet_model extends CI_Model {
             }
             //echo '<br>';
             foreach ($bpsql2min as $key => $value ) {
-                $tmp = $value / ( ($lv-1) * 0.042 +0.2);
+                $tmp = $value / ( ($lv-1) * 0.042 +0.2 + 2/($lv-1));
                 //$tmp = ( $value / ( ($lv-1) * $this->pet_model->tnt($grade[$key]) / ($grade[$key]) + 0.2 ) );
                 $mindg[$key] = max(intval($tmp), $grade[$key] - 4);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
