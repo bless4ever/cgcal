@@ -174,7 +174,7 @@ class Pet_model extends CI_Model {
                 //$tmp = ($value/(($lv-1)*$this->pet_model->tnt($grade[$key])/($grade[$key])+0.2));
                 $maxdg[$key] = min(intval($tmp), $grade[$key]);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
-                //echo $r.'/';
+                //echo $maxdg[$key].'/';
             }
             //echo '<br>';
             foreach ($bpsql2min as $key => $value ) {
@@ -182,7 +182,7 @@ class Pet_model extends CI_Model {
                 //$tmp = ( $value / ( ($lv-1) * $this->pet_model->tnt($grade[$key]) / ($grade[$key]) + 0.2 ) );
                 $mindg[$key] = max(intval($tmp), $grade[$key] - 4);
                 $r = $value - ($lv-1)*$this->pet_model->tnt($tmp);
-                //echo $tmp.'/';
+                //echo $mindg[$key].'/';
             }
             //print_r($mindg);
             //print_r($maxdg);
@@ -214,7 +214,7 @@ class Pet_model extends CI_Model {
                                                 for ($m=0; $m < count($rg['min']) ; $m++) {
                                                     for ($n=0; $n < count($rg['mo']) ; $n++) {
                                                         $sum = $rg['xue'][$i] + $rg['gong'][$j] + $rg['fang'][$k] + $rg['min'][$m] + $rg['mo'][$n];
-                                                        if ($sum == 2) {
+                                                        if (abs($sum - 2) < 0.0000001) {
 
                                                             $rgrade = ($rg['xue'][$i]*5).''.($rg['gong'][$j]*5).''.($rg['fang'][$k]*5).''.($rg['min'][$m]*5).''.($rg['mo'][$n]*5);
                                                             $dgrade = (-$xue+$grade['xue']).''. (-$gong+$grade['gong']).''. (-$fang+$grade['fang']).''. (-$min+$grade['min']).''. (-$mo+$grade['mo']);
